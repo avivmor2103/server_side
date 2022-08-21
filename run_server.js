@@ -12,13 +12,12 @@ const {MongoClient} =  require('mongodb');
 const uri = "mongodb+srv://AvivMor1:AvMo210395!@cluster0.evf8t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const client =  new MongoClient(uri);
 const cors = require('cors');
-
-
+const session = require('express-session');
 
 
 const app = express();
 app.use(cors());
-let port = 3000;
+let port = 3001;
 
 let msg = `${package.description} listening at port ${port}`;
 const manager_user = {
@@ -77,6 +76,7 @@ async function hash(password)
 const router = express.Router();
 
 app.use("/api", router);
+
  //users requests
 router.post("/user/login", (req, res)       => {  users.login(req, res, client)});
 router.post("/user/logout", (req, res)      => {  users.logout(req, res , client );});
@@ -89,20 +89,21 @@ router.get("/user/all_users", (req, res)    => {  users.get_all_users(req, res ,
 //table request
 router.post("/tables/create", (req, res)    => {  tables.new_table(req, res , client );});
 router.put("/tables/update", (req, res)     => {  tables.update_table(req, res, client );});
-router.delete("/tables/delete", (req, res)  => { tables.table_to_delete(req, res, client );});
+router.delete("/tables/delete/:id", (req, res)  => { tables.table_to_delete(req, res, client );});
 router.get("/tables/get/:id", (req, res) => {  tables.get_table(req, res, client );});
 router.get("/tables/all_table", (req, res)    => {  tables.all_tables(req, res, client );});
-router.put("/tables/add_item_to_table", (req, res) => {  tables.add_item_to_table(req, res, client );});
+router.post("/tables/add_item_to_table", (req, res) => {  tables.add_item_to_table(req, res, client );});
 router.put("/tables/delete_item_from_table", (req, res) => {  tables.delete_item_from_table(req, res, client );});
 router.put("/tables/total_price", (req, res) => {  tables.table_total_checkout(req, res, client );});
+router.get("/tables/erea/:erea",  (req , res) => { tables.get_tables_by_erea(req , res , client); });
 
 //items request
-router.post("/item/create", (req, res) => {  items.create_new_items(req, res);});
-router.put("/item/update", (req, res) => { items.update_items(req, res);});
-router.delete("/item/delete", (req, res) => { items.delete_items(req, res);});
-router.get("/item/get/:id(//d)", (req, res) => {  items.get_item(req, res);});
-router.get("/items/all_items", (req, res) => { items.get_all_items(req, res);});
-router.get("/items/get_items_by_category/:id(//d)" , (req, res)=>{ (items.get_items_by_category(req, res))});
+router.post("/item/create", (req, res) => {  items.create_new_item(req, res,client);});
+router.put("/item/update", (req, res) => { items.update_item(req, res,client);});
+router.delete("/item/delete/:id", (req, res) => { items.delete_item(req, res,client);});
+router.get("/item/get/:id", (req, res) => {  items.get_item(req, res,client);});
+router.get("/item/all_items", (req, res) => { items.get_all_items(req, res,client);});
+router.get("/item/get_items_by_category/:category" , (req, res)=>{ items.get_items_by_category(req, res,client)});
 
 //supply request
 router.post("/supply/create", (req, res) => { supply.create_new_supply(req, res);});
@@ -113,7 +114,7 @@ router.get("/supply/get", (req, res) => { supply.get_supply(req, res);});
 
 async function start_server(){
   try{
-      await client.connect();
+      await client.connect(); 
       let idx ;   
       global.g_users = JSON.parse (await fs.readFile('users.json','utf8'));
       global.g_users.forEach(user => {
@@ -127,9 +128,7 @@ async function start_server(){
     manager_user.password = await hash(manager_user.password);
     global.g_users = [manager_user];
     await file.save_to_file('users.json',global.g_users);
-  }//finally{
-  //   //await client.close();
-  // }
+  }
 
   app.listen(port, () => { console.log(msg) } );
 }

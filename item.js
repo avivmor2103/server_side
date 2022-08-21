@@ -2,10 +2,11 @@ const { StatusCodes, RESET_CONTENT } = require("http-status-codes");
 const globals = require("./globals.js");
 const file = require("./rwfile");
 
+
 class Item{
     item_id;
     item_name; 
-    item_catrgory;
+    item_category;
     item_price;
     ingredients_list = [];
     item_quantity;
@@ -13,7 +14,7 @@ class Item{
     constructor(id, name , category , price , ingredients ,quantity , description) {
         this.item_id = id;
         this.item_name = name ;
-        this.item_catrgory = category;
+        this.item_category = category;
         this.item_price= price;
         this.ingredients_list =  ingredients;
         this.item_quantity = quantity;
@@ -47,66 +48,97 @@ const CATEGORY= {
     ALCOHOL : 7
 };
 
-let create_new_item = async (req , res) => {
+async function create_new_item (req , res,client){
 
-    let item_name = req.body.item_name;
-    let item_catrgory = req.body.item_catrgory;
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
+    let item_name = req.body.new_item_name;
+    let item_category = parseInt(req.body.item_category);
     let item_price =  req.body.price;
     let ingredients_list = req.body.ingredients ;
     let item_quantity = req.body.item_quantity; 
     let item_description = req.body.item_description;
-    let max_id = 0;
-    let item_id ;
-    
-    if(!item_name || !item_catrgory || !item_price || !ingredients_list)
+    let item_id , is_name_exist;
+    let items_array = [] ;
+    items_array = await items.find().toArray();
+
+    if(!item_name || !item_category || !item_price || !ingredients_list)
     {
-        res.status(StatusCodes.BAD_REQUEST);
-        res.send("Parameter missing");
+        res.status(StatusCodes.BAD_REQUEST) ;
+        res.send("Parameter missing") ;
+        return ;
     }
 
-    let is_name_exist = globals.g_items.find(item => item.item_name == item_name);
-
-    if(is_name_exist){
     
-        res.status(StatusCodes.BAD_REQUEST);
-        res.send("Item name already exist");
+    items_array.forEach( item => {
+        if(item_name === item.item_name)
+        {
+            is_name_exist = true ;
+        }
+    })
+
+    if( (!item_name) || is_name_exist ){
+    
+        res.status(StatusCodes.BAD_REQUEST) ;
+        res.send("Item name already exist") ;
+        return ;
     }
 
     if( item_price <= 0 || item_quantity <= 0 )
     {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Invalid price or quatity");
+        return ;
     }
-
-    if(!globals.g_items.length == 0){
-        max_id = 1 ;
+   
+    if(await items.countDocuments({}) == 0){
+        item_id = 1 ;
     }
     else {
-        globals.g_items.forEach( item => {
-            if(item.item_id > max_id)
-            {
-                max_id = item.item_id; 
-            }
-        })  
+        // console.log(await items.countDocuments({}));
+        let max_id_item = 0 ;
+         await items_array.forEach(item => {
+             if(item.item_id > max_id_item)
+             {
+                max_id_item = item.item_id;
+                // console.log(max_id_item);
+             }
+         })
+        item_id = parseInt( max_id_item ) + 1 + "";
+        
+        console.log(item_id);
     }
-    let valid_category = check_category_enum(item_catrgory);
+
+    let valid_category = check_category_enum(item_category);
+
     if(valid_category == 0)
     {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Category does not exist.");
+        return;
     }
 
-    item_id = max_id +1 ;
-    let new_item = new Item( item_id, item_name, item_catrgory, item_price, ingredients_list ,item_quantity, item_description);
- 
-    globals.g_items.push(new_item);
-    await file.save_to_file("items.json",global.g_items);
+    let new_item = new Item(
+         item_id, 
+         item_name, 
+         item_category, 
+         item_price, 
+         ingredients_list ,
+         item_quantity, 
+         item_description
+         );
+    try{
+        await items.insertOne(new_item);
+    }catch(err){
+      console.log(err);
+    }
 
     res.status(StatusCodes.CREATED);
     res.send(JSON.stringify(new_item));
+    return;
 };
 
-check_category_enum = (num_category) => {
+function check_category_enum(num_category){
     switch(num_category)
     {
         case 1 :
@@ -135,58 +167,108 @@ check_category_enum = (num_category) => {
             break;
     }
     return num_category ;
-}
-let get_all_items = (req, res)=> {
-    res.status(StatusCodes.OK);
-    res.send(JSON.stringify(globals.g_items));
 };
 
-let update_item = async (req, res) => {
+async function get_all_items(req, res,client){
+
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
+
+    const items_array = await items.find().toArray();
+    let items_details_to_show = [] ;
+
+    items_array.forEach( item => {
+        let item_to_show = {
+           name : item.item_name,
+           price : item.item_price,
+           description : item.item_description
+        };
+        items_details_to_show.push(item_to_show);
+      });
+
+    res.status(StatusCodes.OK);
+    res.send(JSON.stringify(items_details_to_show));
+};
+
+async function update_item(req, res,client) {
+
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
     let new_name = req.body.item_name;
     let id = req.body.item_id;
     let new_price = req.body.price;
     let new_quantity = req.body.quantity;
-    let new_description = req.body.quantity;
+    let new_description = req.body.description;
 
+    let is_exists = await items.findOne({item_id : id});
 
-    let is_exists = globals.g_items.find(item => { item.item_id == id })
     if(!is_exists) 
     {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Item does not exist");
-    }
-
-    globals.g_items.forEach(item => {
-        if(item.item_id == id)
+    }else{
+        if(new_name)
         {
-            if(new_price && new_price > 0)
+            let is_name_exist = await items.findOne({item_name : new_name});
+            console.log(is_name_exist);
+            if (is_name_exist != null )
             {
-                  item.item_price = new_price ;
+                res.status(StatusCodes.BAD_REQUEST);
+                res.send("Item name already exist");
             }
-            if(new_name)
-            {
-                item.name = new_name;
-            }
-            if(new_quantity && new_quantity > 0){
-                item.item_quantity =  new_quantity;
-            }
-            if(new_description){
-                item.item_description =  new_description;
+            try{
+                
+                await items.updateOne({ item_name : is_exists.item_name}, { $set : {item_name : new_name}} );
+            }catch(error){
+                console.log(error);
             }
         }
-    });
+        if(new_price)
+        {
+            console.log("hiii")
 
-    await file.save_to_file("items.json",globals.g_items);
+            try{
+                
+                await items.updateOne({ item_id : is_exists.item_id}, { $set : {item_price : new_price}} );
+            }catch(error){
+                console.log(error);
+            }
+        }
+        if(new_quantity && new_quantity >= 0)
+        {
+            try{
+                
+                await items.updateOne({ item_id : is_exists.item_id }, { $set : {item_quantity : new_quantity}} );
+            }catch(error){
+                console.log(error);
+            }
+        }
+        if(new_description)
+        {
+            try{
+                
+                await items.updateOne({ item_id : is_exists.item_id }, { $set : {item_description : new_description}} );
+            }catch(error){
+                console.log(error);
+            }
+        }
+    
+    }
+
 
     res.status(StatusCodes.OK);
-    res.send(JSON.stringify(globals.g_items));
+    res.send(JSON.stringify(is_exists));
 }
 
-let get_item = (req ,res) => {
-    let id_item = parseInt(req.params.id);
-    let item_to_find = globals.g_items.find(element => {element.item_id == id_item})
-    
-    if(!item_to_find)
+async function get_item(req ,res,client) {
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
+    const id_item = (req.params.id) ;
+
+    const item_to_find = await items.findOne({ item_id : id_item });
+    console.log(item_to_find);
+
+    if(item_to_find == null)
     {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Item does not exists");
@@ -197,40 +279,52 @@ let get_item = (req ,res) => {
     res.send(JSON.stringify(item_to_find));
 }
 
-let delete_item = async (req , res) =>{
-    let id_item_to_delete = req.body.item_id;
+async function delete_item(req , res , client){
 
-    let item_to_delete = globals.g_items.find(item => { item.item_id == id_item_to_delete });
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
+    let id_item_to_delete = (req.params.id);
+
+    let item_to_delete =await items.findOne({ item_id : id_item_to_delete });
+    console.log(item_to_delete);
     if(!item_to_delete)
     {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Item number to delete is not valid.");
         return;
     }
-
-    let idx_item_to_delete = globals.g_items.indexOf(item_to_delete);
-    globals.g_items.splice(idx_item_to_delete , 1);
-   
-
-    await file.save_to_file("items.json",globals.g_items);
+    try{
+        await items.deleteOne({_id : item_to_delete._id});
+    }catch(err){
+        console.log(err);
+    }
+  
 
     res.status(StatusCodes.OK);
-    res.send("Item deleted successfully! 😊😊");
+    res.send("Item deleted successfully!");
 }
 
-let get_items_by_category = (req, res) => {
-    let item_category = parseInt(req.params.category);
-    let items_by_category = [] ;
-
-    globals.g_items.forEach(item => {
+async function get_items_by_category (req, res, client){
+    const db = client.db("Management_system");
+    const items = db.collection("Items");
+    let item_category = req.params.category;
+    const items_by_category = [] ;
+    const all_items = await items.find().toArray();
+    console.log(item_category);
+    all_items.forEach(item => {
+        console.log(item) ;
         if(item.item_category == item_category)
         {
+            console.log(item) ;
             items_by_category.push(item);
         }
-    })
+
+    });
+
     res.status(StatusCodes.OK); 
     res.send(JSON.stringify(items_by_category));
 }
+
 module.exports = {
     create_new_item : create_new_item ,
     update_item : update_item,
@@ -240,3 +334,4 @@ module.exports = {
     Item : Item,
     get_items_by_category : get_items_by_category
 }
+

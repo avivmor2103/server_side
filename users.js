@@ -81,13 +81,17 @@ async function login(req, res , client) {
     if (!user_to_find) {
       res.status(StatusCodes.BAD_REQUEST);
       res.send("There is no user with those detailes");
+      return;
     }
     try{
+      const new_token = await create_new_token();
+	    globals.token_map.set(new_token, user_to_find);
       users.updateOne({ email : email }, { $set : {status : "Active"}} );
+      console.log("User logged in successfully");
     }catch(error){
       console.log(error);
     }
-    console.log("User logged in successfully");
+    
     
     const to_show = await users.findOne({ email : email });
     res.status(StatusCodes.OK);
@@ -95,25 +99,44 @@ async function login(req, res , client) {
 
 }
 
+async function create_new_token()
+{
+	let token =  await create_random_token();
+	while(globals.token_map.get(token) != undefined)
+	{
+		token = await create_random_token();
+	}
+	return token;
+}
+
+function create_random_token()
+{  
+	return new Promise((resolve,reject) => {
+        crypto.randomBytes(48,function(err,buffer){
+              if(err){reject('failed');}
+			  resolve(buffer.toString('hex'));
+			  
+		});
+	})
+	   
+}
+
 async function logout(req , res, client)
 {
   const db = client.db("Management_system");
   const users =  db.collection("Users");
+  const emailRecive = req.body.email ;
+  console.log("Here");
 
-  const token = req.headers.authorization;
-  const email = globals.token_map.get(token).email;
   try{
-    users.updateOne({ email : email }, { $set : {status : "Disconnect"}} );
+    await users.updateOne({ email : emailRecive }, { $set : {status : "Disconnect"}} );
+    res.status(StatusCodes.OK);
+    res.send("Loged out successfully.");
+    return ;
   }catch(error){
+    console.log("Halas");
     console.log(error);
-  }
-  if(globals.token_map.delete(token))
-  {
-    res.status(StatusCode.OK)
-    res.send("User log-out successfully.");
-  }
-  else{
-    res.send("User already logged-out.")
+    
   }
 }
 
@@ -188,7 +211,7 @@ async function create_new_user (req , res , client)
 	res.send(  JSON.stringify( new_user) );  
 }
 
-get_postion = (position) => {
+function get_postion(position){
   switch(position){
     case 1 : 
         position = POSITION.CHEF;
@@ -244,21 +267,37 @@ async function update_user(req ,res, client)
   const personal_id = req.body.personal_id;
   const phone_number = req.body.phone_number;
   const address =  req.body.address;
-  const email = req.body.email;
+  const userEmail = req.body.email;
   const position = req.body.position;
+  const status = req.body.status;
   let user_to_update;
-  //let idx ;
-  user_to_update = await users.findOne({personal_id : personal_id});
-  //user_to_update = globals.g_users.find(user => user.id == id);
+
+  user_to_update = await users.findOne({email : userEmail});
   if(user_to_update != undefined)
   {
     if(position)
     {
+      if(status)
+      {
         try{
-          await users.updateOne({ position : user_to_update.position }, { $set : {position : position}} );
-        }catch(error){
-          console.log(error);
+          await users.updateOne({ email : userEmail }, { $set : {status : status}} );
+        }catch(e)
+        {
+          console.log(e);
         }
+      }
+
+      if( (!check_position(position)) && position )
+      {
+        res.status( StatusCodes.BAD_REQUEST );
+        res.send( "Position is not valide" );
+        return ;
+      }
+      try{
+        await users.updateOne({ position : user_to_update.position }, { $set : {position : position}} );
+      }catch(error){
+        console.log(error);
+      }
     }
 
     if(phone_number)
@@ -271,7 +310,9 @@ async function update_user(req ,res, client)
     }
     if(address)
     {
+      ///need to check if the position is valid
       try{
+        //chaeck this
         await users.updateOne({ address : user_to_update.address }, { $set : {address : address}} );
       }catch(error){
         console.log(error);
@@ -280,13 +321,17 @@ async function update_user(req ,res, client)
 
     if(email)
     {   
-      if( ( email != user_to_update.email ) && (validator.validate(email))){
+      if( ( userEmail != user_to_update.email ) && (validator.validate(userEmail))){
         if(await users.findOne({ email : email})){
+
+          res.status(StatusCodes.BAD_REQUEST);
           res.send("Email already exist. Please try another email address.");
+          return; 
         }
         else{
           try{
             await users.updateOne({ email : user_to_update.email }, { $set : { email : email }} );
+            return ;
           }catch(error){
             console.log(error);
           }
@@ -294,12 +339,14 @@ async function update_user(req ,res, client)
       }else{
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Error");
+        return;
       }
     }
   }
   else{
     res.status(StatusCodes.BAD_REQUEST);
     res.send("User with such id is not exist");
+    return;
   }
   res.status(StatusCodes.OK);
   res.send("User data updated"); 
@@ -365,7 +412,7 @@ async function get_user(req , res , client)
   console.log(user_to_send);
   if( !user_to_send )
   {
-    res.status(StatusCodes.BAD_REQUEST);
+    res.status(StatusCodes.NOT_FOUND);
     res.send("User not found");
     return
   } 

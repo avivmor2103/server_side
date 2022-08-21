@@ -111,7 +111,7 @@ async function new_table(req, res, client) {
 async function table_to_delete(req, res, client) {
     const db = client.db("Management_system");
     const tables = db.collection("Tables");
-    let delete_num_table = req.body.num_table;
+    let delete_num_table = req.params.id;
     let table_to_delete = await tables.findOne({ num_table : delete_num_table });
 
     if (table_to_delete == null) {
@@ -184,10 +184,16 @@ async function add_item_to_table(req, res, client) {
     const items = db.collection("Items");
 
     let id_table = req.body.num_table;
-    let id_item = req.body.item_id;
+    let new_items_array = req.body.items_array;
+    //let price_item = req.body.price;
 
-    const item_name = await items.findOne({ item_id : id_item});
-    await tables.insertOne({ num_table : id_table} , { $push : {items_array : item_name }});
+    // const newItem = {
+    //     name : id_item,
+    //     id : price_item
+    // }
+    const table_name = await tables.findOne({ num_table : id_table});
+    console.log(table_name);
+    await tables.updateOne({ num_table : id_table} , { $set : {items_array : new_items_array }});
     res.status(StatusCodes.OK);
     res.send(`Item add successfully to table  : ${id_table}`);
 }
@@ -217,6 +223,38 @@ async function table_total_checkout(req, res) {
     res.send(JSON.stringify(sum));
 }
 
+async function get_tables_by_erea(req , res , client){
+    const db = client.db("Management_system");
+    const tables = db.collection("Tables");
+    let erea_type = parseInt( req.params.erea);
+    let tables_erea_type = [];
+    let tables_array = [];
+
+    //console.log("In function")
+
+    if( erea_type === "" )
+    {
+        res.status(StatusCodes.BAD_REQUEST);
+        res.send("No such an option.");
+        return ;
+    }
+    try{
+        tables_array =await tables.find().toArray();
+        //console.log(tables_array);
+        tables_array.forEach( t => {
+            if(t.erea === erea_type)
+            {
+                tables_erea_type.push(t) ;
+            }
+        })
+    }catch(err){
+        console.log(err);
+    }
+    res.status(StatusCodes.OK);
+    res.send(JSON.stringify(tables_erea_type));
+    return ;
+}
+
 module.exports = {
     new_table : new_table ,
     update_table : update_table,
@@ -225,5 +263,6 @@ module.exports = {
     all_tables : all_tables, 
     add_item_to_table : add_item_to_table,
     delete_item_from_table : delete_item_from_table ,
-    table_total_checkout : table_total_checkout
+    table_total_checkout : table_total_checkout, 
+    get_tables_by_erea : get_tables_by_erea 
 }
