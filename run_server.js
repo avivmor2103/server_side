@@ -8,6 +8,7 @@ const users = require("./users.js");
 const tables = require("./tables.js");
 const items = require("./item.js");
 const supply = require("./supply.js");
+const orders = require("./Orders");
 const {MongoClient} =  require('mongodb');
 const uri = "mongodb+srv://AvivMor1:AvMo210395!@cluster0.evf8t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const client =  new MongoClient(uri);
@@ -110,6 +111,16 @@ router.post("/supply/create", (req, res) => { supply.create_new_supply(req, res)
 router.put("/supply/update", (req, res) => {  supply.update_supply(req, res);});
 router.delete("/supply/delete", (req, res) => { supply.delete_supply(req, res);});
 router.get("/supply/get", (req, res) => { supply.get_supply(req, res);});
+
+
+//orders requests
+
+router.post("/order/create", (req, res)      => {  orders.createNewOrder(req, res , client);});
+router.put("/order/update", (req, res)       => {  orders.updateOrderData(req, res , client);});
+router.delete("/order/delete/(:orderNumber)", (req, res)    => {  orders.deleteOrder(req, res , client);});
+router.put("/order/delete_item", (req, res)    => {  orders.deleteItemFromOrder(req, res , client);});
+router.get("/order/get/(:orderNumber)", (req, res) => {  orders.getOrder(req, res , client);});
+router.get("/order/all_orders", (req, res)    => {  orders.getAllOrders(req, res , client);});
 
 
 async function start_server(){

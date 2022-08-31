@@ -264,15 +264,21 @@ async function update_user(req ,res, client)
 {
   const db = client.db("Management_system");
   const users = db.collection("Users");
-  const personal_id = req.body.personal_id;
+  const id = req.body.personal_id;
   const phone_number = req.body.phone_number;
   const address =  req.body.address;
   const userEmail = req.body.email;
   const position = req.body.position;
   const status = req.body.status;
+  const password = req.body.password;
+  const date = req.body.date_of_birth;
+  const first_name = req.body.first_name;
+  const last_name = req.body.last_name;
+  const new_id = req.body.new_id;
   let user_to_update;
-
-  user_to_update = await users.findOne({email : userEmail});
+ 
+  user_to_update = await users.findOne({personal_id : id});
+  console.log(user_to_update);
   if(user_to_update != undefined)
   {
     if(position)
@@ -280,21 +286,23 @@ async function update_user(req ,res, client)
       if(status)
       {
         try{
-          await users.updateOne({ email : userEmail }, { $set : {status : status}} );
+          await users.updateOne({ personal_id : id }, { $set : {status : status}} );
         }catch(e)
         {
           console.log(e);
         }
       }
-
-      if( (!check_position(position)) && position )
-      {
-        res.status( StatusCodes.BAD_REQUEST );
-        res.send( "Position is not valide" );
-        return ;
-      }
       try{
-        await users.updateOne({ position : user_to_update.position }, { $set : {position : position}} );
+        await users.updateOne({ personal_id : id }, { $set : {position : position}} );
+      }catch(error){
+        console.log(error);
+      }
+    }
+
+    if(password){
+      try{
+        const hashPassword = await hash(password);
+        await users.updateOne({ personal_id : id }, { $set : {password : hashPassword}} );
       }catch(error){
         console.log(error);
       }
@@ -303,26 +311,58 @@ async function update_user(req ,res, client)
     if(phone_number)
     {
       try{
-        await users.updateOne({ phone_number : user_to_update.phone_number }, { $set : {phone_number : phone_number}} );
+        await users.updateOne({ personal_id : id }, { $set : {phone_number : phone_number}} );
       }catch(error){
         console.log(error);
       }
     }
     if(address)
     {
-      ///need to check if the position is valid
-      try{
-        //chaeck this
-        await users.updateOne({ address : user_to_update.address }, { $set : {address : address}} );
+          try{
+        await users.updateOne({ personal_id : id }, { $set : {address : address}} );
       }catch(error){
         console.log(error);
       }
     }
 
-    if(email)
+    if(date){
+      try{
+        await users.updateOne({ personal_id : id }, { $set : {date_of_birth : date}} );
+      }catch(error){
+        console.log(error);
+      }
+    }
+
+    if(first_name){
+      try{
+        await users.updateOne({ personal_id : id }, { $set : {first_name : first_name}} );
+      }catch(error){
+        console.log(error);
+      }
+    }
+    
+    if(last_name){
+      try{
+        await users.updateOne({ personal_id : id }, { $set : {last_name : last_name}} );
+      }catch(error){
+        console.log(error);
+      }
+    }
+
+    if(new_id){
+      try{
+        await users.updateOne({ personal_id : id }, { $set : {personal_id : new_id}} );
+      }catch(error){
+        console.log(error);
+      }
+    }
+
+    if(userEmail)
     {   
-      if( ( userEmail != user_to_update.email ) && (validator.validate(userEmail))){
-        if(await users.findOne({ email : email})){
+      if(  userEmail ) /*&& (validator.validate(userEmail))*/{
+        const userz = await users.findOne({ email: userEmail});
+        console.log(userz);
+        if(userz != null){
 
           res.status(StatusCodes.BAD_REQUEST);
           res.send("Email already exist. Please try another email address.");
@@ -330,7 +370,7 @@ async function update_user(req ,res, client)
         }
         else{
           try{
-            await users.updateOne({ email : user_to_update.email }, { $set : { email : email }} );
+            await users.updateOne({ personal_id : id }, { $set : { email : userEmail }} );
             return ;
           }catch(error){
             console.log(error);
@@ -342,6 +382,7 @@ async function update_user(req ,res, client)
         return;
       }
     }
+
   }
   else{
     res.status(StatusCodes.BAD_REQUEST);
@@ -387,8 +428,9 @@ async function delete_user(req , res , client)
   }else{
     try{
     await users.deleteOne({ _id : user_to_delete._id });
+    const users_array = await users.find().toArray();
     res.status(StatusCodes.OK);
-    res.send(`Document deleted`);
+    res.send(users_array);
     }catch(err)
     {
       console.log(err);

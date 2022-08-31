@@ -120,8 +120,9 @@ async function table_to_delete(req, res, client) {
         return;
     }
     await tables.deleteOne({ num_table : delete_num_table });
+    const tablesArray = await tables.find().toArray();
     res.status(StatusCodes.OK);
-    res.send("Table deleted successfully!");
+    res.send(tablesArray);
 }
 
 async function update_table(req, res , client ) {

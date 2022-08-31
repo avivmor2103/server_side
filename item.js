@@ -90,7 +90,7 @@ async function create_new_item (req , res,client){
         res.send("Invalid price or quatity");
         return ;
     }
-   
+    
     if(await items.countDocuments({}) == 0){
         item_id = 1 ;
     }
