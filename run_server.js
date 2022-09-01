@@ -119,6 +119,7 @@ router.post("/order/create", (req, res)      => {  orders.createNewOrder(req, re
 router.put("/order/update", (req, res)       => {  orders.updateOrderData(req, res , client);});
 router.delete("/order/delete/(:orderNumber)", (req, res)    => {  orders.deleteOrder(req, res , client);});
 router.put("/order/delete_item", (req, res)    => {  orders.deleteItemFromOrder(req, res , client);});
+router.put("/order/update_status", (req, res)    => {  orders.updateOrderStatus(req, res , client);});
 router.get("/order/get/(:orderNumber)", (req, res) => {  orders.getOrder(req, res , client);});
 router.get("/order/all_orders", (req, res)    => {  orders.getAllOrders(req, res , client);});
 

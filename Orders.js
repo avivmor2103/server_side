@@ -150,24 +150,25 @@ const deleteItemFromOrder = async(req, res, client) =>{
     const orders = db.collection("Orders");
     const order = parseInt(req.body.orderNumber);
     const item = req.body.itemName;
-    console.log(order);
+    //console.log(order);
     try{
         let orderToUpdate = await orders.findOne({ numOrder : order });
-        console.log(orderToUpdate);
+        //console.log(orderToUpdate);
         // await orders.deleteOne({ _id : orderToUpdate._id });
         const idx = orderToUpdate.itemsList.findIndex(element => element.name == item);
+        console.log(idx);
         if(idx !== null){
             if(orderToUpdate.itemsList[idx].quantity === 1){
                 orderToUpdate.itemsList.splice(idx,1);
             }else{
-                orderToUpdate.itemsList[idx].quantity--;
+                parseInt(orderToUpdate.itemsList[idx].quantity)--;
             }
+            await orders.deleteOne({ _id : orderToUpdate._id });
             await orders.insertOne(orderToUpdate);
             res.status(StatusCodes.OK);
             res.send(orderToUpdate);
         }
-        res.status(StatusCodes.OK);
-        res.send(orderToUpdate);
+      
     }catch(e){
         console.log(e);
     }
@@ -198,11 +199,35 @@ const getOrder = async (req , res, client) => {
     }
 }
 
+const updateOrderStatus = async (req , res , client) => {
+    const db = client.db("Management_system");
+    const orders = db.collection("Orders");
+    const newStatus= req.body.newStatus;
+    const orderNumber = parseInt(req.body.orderNumber);
+
+    try{
+        let order = await orders.findOne({ numOrder : orderNumber});
+        if(order){
+            await orders.updateOne({ numOrder : orderNumber}, { $set: {status : newStatus}});
+            let ordersArray = await orders.find().toArray();
+            res.status(StatusCodes.OK);
+            res.send(ordersArray);
+
+        }else{
+            res.status(StatusCodes.NOT_FOUND);
+            res.send("Order not found.");
+        }
+    }catch(e){
+        console.log(e);
+    }
+}
+
 module.exports= {
     createNewOrder: createNewOrder,
     getAllOrders: getAllOrders,
     updateOrderData: updateOrderData,
     deleteOrder: deleteOrder,
     deleteItemFromOrder: deleteItemFromOrder,
-    getOrder: getOrder
+    getOrder: getOrder,
+    updateOrderStatus :updateOrderStatus
 }

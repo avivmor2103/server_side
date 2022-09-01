@@ -2,7 +2,7 @@ let token_map = new Map();
 let g_users = [];
 let g_tables = [] ;
 let g_items = [];
-let g_position = ["Manager" , "Cheff", "Bartender", "Waiter", "host", "Cook" ];
+let g_position = ["Manager" , "Chef", "Bartender", "Waiter", "host", "Cook" ];
 
 function get_active_user(req)
 { 

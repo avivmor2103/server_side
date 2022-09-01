@@ -201,7 +201,7 @@ async function create_new_user (req , res , client)
     await users.insertOne(new_user);
     const new_token = await create_new_token();
     globals.token_map.set(new_token, new_user);
-    res.json({token: new_token, new_user: new_user, admin: user.personal_id == 1});
+    //res.json({token: new_token, new_user: new_user, admin: user.personal_id == 1});
   }
   catch(err){
 	  console.log(err)	
