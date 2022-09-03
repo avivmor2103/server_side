@@ -9,6 +9,7 @@ const tables = require("./tables.js");
 const items = require("./item.js");
 const supply = require("./supply.js");
 const orders = require("./Orders");
+const reservations = require("./reservations");
 const {MongoClient} =  require('mongodb');
 const uri = "mongodb+srv://AvivMor1:AvMo210395!@cluster0.evf8t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const client =  new MongoClient(uri);
@@ -122,6 +123,16 @@ router.put("/order/delete_item", (req, res)    => {  orders.deleteItemFromOrder(
 router.put("/order/update_status", (req, res)    => {  orders.updateOrderStatus(req, res , client);});
 router.get("/order/get/(:orderNumber)", (req, res) => {  orders.getOrder(req, res , client);});
 router.get("/order/all_orders", (req, res)    => {  orders.getAllOrders(req, res , client);});
+
+
+/// reservations requests 
+router.post("/reservations/create", (req, res) => {  reservations.createNewReservation(req, res , client);});
+router.delete("/reservations/delete/:reservationId", (req, res) => {  reservations.deleteReservation(req, res , client);});
+router.put("/reservations/update_date", (req, res) => {  reservations.updateReservationDate(req, res , client);});
+router.get("/reservations/get/(:reservationId)", (req, res) => {  reservations.updateReservationDate(req, res , client);});
+router.put("/reservations/update", (req, res) => {  reservations.updateReservationClientDetailes(req, res , client);});
+router.get("/reservations/all_reservations", (req, res) => {  reservations.getAllReservation(req, res , client);});
+
 
 
 async function start_server(){
