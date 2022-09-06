@@ -103,7 +103,7 @@ const createNewOrder = async (req , res , client) =>{
                                 exectTime,
                                 employeeId,
                                 status
-                            )
+                            );
     newOrder.itemsList = [...items];
     
     try{
