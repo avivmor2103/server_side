@@ -9,12 +9,14 @@ const tables = require("./tables.js");
 const items = require("./item.js");
 const supply = require("./supply.js");
 const orders = require("./Orders");
+const OrdersHistory = require("./OrdersHistory");
 const reservations = require("./reservations");
 const {MongoClient} =  require('mongodb');
 const uri = "mongodb+srv://AvivMor1:AvMo210395!@cluster0.evf8t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const client =  new MongoClient(uri);
 const cors = require('cors');
 const session = require('express-session');
+
 
 
 const app = express();
@@ -98,7 +100,7 @@ router.post("/tables/add_item_to_table", (req, res) => {  tables.add_item_to_tab
 router.put("/tables/delete_item_from_table", (req, res) => {  tables.delete_item_from_table(req, res, client );});
 router.put("/tables/total_price", (req, res) => {  tables.table_total_checkout(req, res, client );});
 router.get("/tables/erea/:erea",  (req , res) => { tables.get_tables_by_erea(req , res , client); });
-
+router.put("/tables/reset/:id", (req, res)=> { tables.resetTable(req, res, client);})
 //items request
 router.post("/item/create", (req, res) => {  items.create_new_item(req, res,client);});
 router.put("/item/update", (req, res) => { items.update_item(req, res,client);});
@@ -133,24 +135,19 @@ router.get("/reservations/get/(:reservationId)", (req, res) => {  reservations.u
 router.put("/reservations/update", (req, res) => {  reservations.updateReservationClientDetailes(req, res , client);});
 router.get("/reservations/all_reservations", (req, res) => {  reservations.getAllReservation(req, res , client);});
 
+//History
+router.post("/OrdersHistory/create", (req, res) => {  OrdersHistory.createNewHistoryOrder(req, res , client);});
+router.delete("/OrdersHistory/delete/:orderHistoryId" , (req, res)=>{OrdersHistory.deleteOrderHistory(req, res, client);});
+router.get("OrdersHistory/getAll", (req, res)=>{OrdersHistory.getAllHistory(req, res, client);});
+
 
 
 async function start_server(){
   try{
       await client.connect(); 
-      let idx ;   
-      global.g_users = JSON.parse (await fs.readFile('users.json','utf8'));
-      global.g_users.forEach(user => {
-      idx = global.g_users.indexOf(user);
-      if(user.status == 'deleted'){
-        global.g_users.splice(idx , 1);
-      }
-    });
   }catch(err){
     console.log(err);
     manager_user.password = await hash(manager_user.password);
-    global.g_users = [manager_user];
-    await file.save_to_file('users.json',global.g_users);
   }
 
   app.listen(port, () => { console.log(msg) } );

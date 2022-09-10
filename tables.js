@@ -2,6 +2,8 @@ const { StatusCodes, RESET_CONTENT } = require("http-status-codes");
 const globals = require("./globals.js");
 const file = require("./rwfile");
 const { table } = require("console");
+const item = require("./item.js");
+const { read } = require("fs");
 
 const EREA = {
     INSIDE : 1,
@@ -192,9 +194,14 @@ async function add_item_to_table(req, res, client) {
     //     name : id_item,
     //     id : price_item
     // }
-    const table_name = await tables.findOne({ num_table : id_table});
-    console.log(table_name);
-    await tables.updateOne({ num_table : id_table} , { $set : {items_array : new_items_array }});
+    try{
+        const table_name = await tables.findOne({ num_table : id_table});
+        console.log(table_name);
+        await tables.updateOne({ num_table : id_table} , { $set : {items_array : new_items_array }});
+        
+    }catch(e){
+        console.log(e);
+    }
     res.status(StatusCodes.OK);
     res.send(`Item add successfully to table  : ${id_table}`);
 }
@@ -256,6 +263,20 @@ async function get_tables_by_erea(req , res , client){
     return ;
 }
 
+const resetTable = async (req, res, client) => {
+    const db = client.db("Management_system");
+    const tables = db.collection("Tables");
+    const tableToReset = req.params.id ;
+    let items = [];
+    try{
+        await tables.updateOne({ num_table : tableToReset} , { $set : {items_array : items}});
+    }catch(e){
+        console.log(e);
+    }
+    res.status(StatusCodes.OK);
+    res.send("Reset Table successfully");
+}
+
 module.exports = {
     new_table : new_table ,
     update_table : update_table,
@@ -265,5 +286,6 @@ module.exports = {
     add_item_to_table : add_item_to_table,
     delete_item_from_table : delete_item_from_table ,
     table_total_checkout : table_total_checkout, 
-    get_tables_by_erea : get_tables_by_erea 
+    get_tables_by_erea : get_tables_by_erea,
+    resetTable : resetTable 
 }

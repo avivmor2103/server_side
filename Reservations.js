@@ -38,7 +38,7 @@ const createNewReservation = async (req, res, client) => {
     const numGuests = req.body.numGuests;
     const firstName = req.body.firstName;
     const lastName = req.body.lastName;
-    const phoneNumber = req.body.lastName;
+    const phoneNumber = req.body.phoneNumber;
     const clientEmail = req.body.email;
 
     /// create date
@@ -110,7 +110,6 @@ const deleteReservation = async( req, res , client) => {
     try{
         await reservations.deleteOne({reservationId : numReservationToDelete});
         reservationsArray = await reservations.find().toArray();
-       
     }catch(e){
         console.log(e);
     }
@@ -194,7 +193,7 @@ const updateReservationClientDetailes = async (req, res, client) => {
     res.send(reservationsArray);
 }
 
-const getAllReservation = async (req, res ,client) =>{
+const getAllReservation = async (req, res ,client) =>  {
     const db = client.db("Management_system");
     const reservations = db.collection("Reservations");
     

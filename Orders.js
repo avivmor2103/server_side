@@ -1,6 +1,6 @@
 const { StatusCodes} = require("http-status-codes");
 
-let Status = ["PrePreparation" , "InPreparation", "PostPreparation", "Cancled"];
+let Status = ["Pre preparation" , "In preparation", "Post preparation", "Cancled"];
 
 class Order {
     numOrder;

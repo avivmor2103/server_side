@@ -69,14 +69,13 @@ async function login(req, res , client) {
     const user_password = req.body.user_password;
     const user_to_find = await users.findOne({ email : email });
     
-    
-    ///Check it!!!!!!
-    // if(!(await bcrypt.compare(user_password , user_to_find.password)))
-    // {
-    // 	res.status( StatusCodes.BAD_REQUEST );
-    // 	res.send( "wrong password!!!");
-    // 	return;
-    // } 
+    console.log(user_password);
+    if(!(await bcrypt.compare(req.body.user_password , user_to_find.password)))
+    {
+    	res.status( StatusCodes.BAD_REQUEST );
+    	res.send( "wrong password!!!");
+    	return;
+    } 
     
     if (!user_to_find) {
       res.status(StatusCodes.BAD_REQUEST);
@@ -126,15 +125,12 @@ async function logout(req , res, client)
   const db = client.db("Management_system");
   const users =  db.collection("Users");
   const emailRecive = req.body.email ;
-  console.log("Here");
-
   try{
     await users.updateOne({ email : emailRecive }, { $set : {status : "Disconnect"}} );
     res.status(StatusCodes.OK);
     res.send("Loged out successfully.");
     return ;
   }catch(error){
-    console.log("Halas");
     console.log(error);
     
   }
@@ -159,6 +155,7 @@ async function create_new_user (req , res , client)
   {
     res.status(StatusCodes.BAD_REQUEST);
     res.send("Missing parameter in user's parameters");
+    return;
   }
 
   console.log(email);
@@ -171,26 +168,33 @@ async function create_new_user (req , res , client)
 		res.send( "Invalid email in request - not in email format")
 		return;
   }
-
-  const email_exist = globals.g_users.find(user => user.email == email);
-  if(email_exist)
-  {
-    res.status(StatusCodes.BAD_REQUEST);
-    res.send("Email user already taken");
-  } 
-
-  const id_exist = globals.g_users.find(user => user.personal_id == personal_id);
-  if(id_exist)
-  {
-    res.status(StatusCodes.BAD_REQUEST);
-    res.send("Id user already taken");
-  } 
+  try{
+    const user_from_db = await users.findOne({ email : email});
+    if(user_from_db){
+      res.status(StatusCodes.OK);
+      res.send("Email user already taken");
+      return
+    } 
+  }catch(e){
+    console.log(e);
+  }
+  try{
+    const user_from_db = await users.findOne({ personal_id : personal_id});
+    if(user_from_db){
+      res.status(StatusCodes.OK);
+      res.send("Id user already taken");
+      return;
+    } 
+  }catch(e){
+    console.log(e);
+  }
 
   let pos = get_postion(position)
   if(pos ==  undefined)
   {
     res.status(StatusCodes.BAD_REQUEST);
-    res.send("Id user already taken");
+    res.send("IPosition is not define");
+    return;
   }
 
   const new_user = new User( first_name, last_name, email, personal_id, address, phone_number, date_of_birth, await hash(password), position, "Created" );
@@ -208,7 +212,9 @@ async function create_new_user (req , res , client)
   }
   
   res.status( StatusCodes.CREATED );
-	res.send(  JSON.stringify( new_user) );  
+	//res.send(  JSON.stringify( new_user) );
+  res.send("User created successfully");
+  return;
 }
 
 function get_postion(position){
