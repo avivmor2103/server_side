@@ -1,7 +1,8 @@
 {
   "name": "server",
   "scripts": {
-    "start_server": "nodemon run_server.js"
+    "start_server": "nodemon run_server.js",
+    "start": "node run_server.js"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
