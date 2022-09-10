@@ -23,7 +23,7 @@ const session = require('express-session');
 
 const app = express();
 app.use(cors());
-let port = 3001;
+let port = process.env.PORT || 3001;
 
 let msg = `${package.description} listening at port ${port}`;
 const manager_user = {
