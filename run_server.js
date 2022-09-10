@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 //const StatusCodes = require("http-status-codes").StatusCodes;
 const file = require("./rwfile");
 const fs = require("fs").promises;
@@ -12,10 +13,11 @@ const orders = require("./Orders");
 const OrdersHistory = require("./OrdersHistory");
 const reservations = require("./reservations");
 const {MongoClient} =  require('mongodb');
-const uri = "mongodb+srv://AvivMor1:AvMo210395!@cluster0.evf8t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = process.env.MONGO_URI;
 const client =  new MongoClient(uri);
 const cors = require('cors');
 const session = require('express-session');
+
 
 
 
