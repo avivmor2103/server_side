@@ -56,7 +56,7 @@ async function new_table(req, res, client) {
     let erea = parseInt(req.body.erea);
 
     let is_table_exist = await tables.findOne({ num_table: num_table });
-    console.log(is_table_exist);
+    //console.log(is_table_exist);
 
     if (is_table_exist != null) {
         res.status(StatusCodes.BAD_REQUEST);
@@ -105,7 +105,7 @@ async function new_table(req, res, client) {
 
     let new_table = new Table(num_table, num_seats, is_available, erea);
     await tables.insertOne(new_table);
-    console.log("Table created successfully!");
+    //console.log("Table created successfully!");
     res.status(StatusCodes.CREATED);
     res.send(JSON.stringify(new_table));
 }
@@ -132,11 +132,11 @@ async function update_table(req, res , client ) {
     const tables = db.collection("Tables");
     let num_table = req.body.num_table;
     let new_num_seat = req.body.num_seats;
-    console.log(num_table);
-    console.log(new_num_seat);
+    //console.log(num_table);
+    //console.log(new_num_seat);
 
     let table_to_update = await tables.findOne({ num_table : num_table });
-    console.log(table_to_update);
+    //console.log(table_to_update);
     if (table_to_update == null ) {
         res.status(StatusCodes.BAD_REQUEST);
         res.send("Num table is not exist");
@@ -166,7 +166,7 @@ async function all_tables(req, res , client) {
     const tables = db.collection("Tables");
     
     const tables_to_show = await tables.find().toArray();
-    console.log(tables_to_show);
+    //console.log(tables_to_show);
     let show = []; 
     tables_to_show.forEach( table => {
         let table_to_add ={ 
@@ -176,7 +176,7 @@ async function all_tables(req, res , client) {
         } ;
         show.push(table_to_add);
     })
-    console.log(tables_to_show);
+    //console.log(tables_to_show);
     res.status(StatusCodes.OK);
     res.send(JSON.stringify(show));
 }
@@ -196,7 +196,7 @@ async function add_item_to_table(req, res, client) {
     // }
     try{
         const table_name = await tables.findOne({ num_table : id_table});
-        console.log(table_name);
+        //console.log(table_name);
         await tables.updateOne({ num_table : id_table} , { $set : {items_array : new_items_array }});
         
     }catch(e){
