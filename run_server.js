@@ -137,6 +137,14 @@ router.get("/reservations/get/(:reservationId)", (req, res) => {  reservations.u
 router.put("/reservations/update", (req, res) => {  reservations.updateReservationClientDetailes(req, res , client);});
 router.get("/reservations/all_reservations", (req, res) => {  reservations.getAllReservation(req, res , client);});
 
+//Suppliers
+
+router.post("/suppliers/create", (req, res)=>{ supply.addNewSupplier(req, res, client);});
+router.delete("/suppliers/delete", (req, res)=>{ supply.deleteSupplier(req, res,client);});
+router.put("/suppliers/update", (req, res)=>{ supply.updateSupplierData(req, res, client);});
+router.get("/suppliers/all_suppliers", (req, res)=>{ supply.getAllSupplier(req, res, client);});
+
+
 //History
 router.post("/OrdersHistory/create", (req, res) => {  OrdersHistory.createNewHistoryOrder(req, res , client);});
 router.delete("/OrdersHistory/delete/:orderHistoryId" , (req, res)=>{OrdersHistory.deleteOrderHistory(req, res, client);});
