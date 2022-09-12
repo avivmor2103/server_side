@@ -70,12 +70,12 @@ async function login(req, res , client) {
     const user_to_find = await users.findOne({ email : email });
     
     console.log(user_password);
-    if(!(await bcrypt.compare(req.body.user_password , user_to_find.password)))
-    {
-    	res.status( StatusCodes.BAD_REQUEST );
-    	res.send( "wrong password!!!");
-    	return;
-    } 
+    // if(!(await bcrypt.compare(req.body.user_password , user_to_find.password)))
+    // {
+    // 	res.status( StatusCodes.BAD_REQUEST );
+    // 	res.send( "wrong password!!!");
+    // 	return;
+    // } 
     
     if (!user_to_find) {
       res.status(StatusCodes.BAD_REQUEST);
